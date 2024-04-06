@@ -1,0 +1,57 @@
+version: '3.7'
+name: task-manager
+
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: task_manager
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  adminer:
+    image: adminer:latest
+    restart: always
+    ports:
+      - "8080:8080"
+
+  minio:
+    image: minio/minio
+    restart: always
+    command: server /data
+    environment:
+      MINIO_ACCESS_KEY: YOUR_ACCESS_KEY
+      MINIO_SECRET_KEY: YOUR_SECRET_KEY
+    ports:
+      - "9000:9000"
+    volumes:
+      - minio_data:/data
+
+  nestjs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_USER: root
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: task_manager
+      MINIO_END_POINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: YOUR_ACCESS_KEY
+      MINIO_SECRET_KEY: YOUR_SECRET_KEY
+
+    depends_on:
+      - db
+      - minio
+
+volumes:
+  db_data:
+  minio_data:
